@@ -1,0 +1,17 @@
+[project]
+name = "packsim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Fábio Pinto Fortkamp", email = "fabio@fabiofortkamp.com" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+packsim = "packsim:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
