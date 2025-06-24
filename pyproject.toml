@@ -1,13 +1,15 @@
 [project]
 name = "packsim"
 version = "0.1.0"
-description = "Add your description here"
+description = "Simulator of the process of packing particles"
 readme = "README.md"
 authors = [
     { name = "Fábio Pinto Fortkamp", email = "fabio@fabiofortkamp.com" }
 ]
-requires-python = ">=3.11"
-dependencies = []
+requires-python = ">=3.11, <3.12"
+dependencies = [
+    "packgen",
+]
 
 [project.scripts]
 packsim = "packsim:main"
@@ -15,3 +17,6 @@ packsim = "packsim:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+packgen = { git = "https://github.com/cmt-dtu-energy/packgen", rev = "v0.3.0" }
