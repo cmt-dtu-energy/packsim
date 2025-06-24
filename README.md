@@ -98,15 +98,15 @@ Each array element is an object with the following fields:
   "extracted_packing": {
     "items": [], // array of objects described below
     "volume": ..., // volume of the boxed container
-  "filling_fraction": ..., // how much of the volume above the particles occupy
+    "filling_fraction": ..., // how much of the volume above the particles occupy
     "xmin": ..., // minimum x-value of all vertices of all particles,
-  // likewise, there are "xmax", "ymin","ymax","zmin","zmax" fields
-  "average_alignment_x": ..., // mean value of the orientation of the particles with respect for the "x" axis
-  "standard_deviation_alignment_x": ..., // standard deviation of the statistic described above
-  // likewise, the fields above are defined for the "y" and "z" direction
-  "volume_weighted_average_alignment_x": ..., // same as above, but using each particle's volume as weigth and normalizing with the box volume
-  "volume_weighted_standard_deviation_alignment_x": ..., // standard deviation of the statistic described above
-  // likewise, the fields above are defined for the "y" and "z" direction
+    // likewise, there are "xmax", "ymin","ymax","zmin","zmax" fields
+    "average_alignment_x": ..., // mean value of the orientation of the particles with respect for the "x" axis
+    "standard_deviation_alignment_x": ..., // standard deviation of the statistic described above
+    // likewise, the fields above are defined for the "y" and "z" direction
+    "volume_weighted_average_alignment_x": ..., // same as above, but using each particle's volume as weigth and normalizing with the box volume
+    "volume_weighted_standard_deviation_alignment_x": ..., // standard deviation of the statistic described above
+    // likewise, the fields above are defined for the "y" and "z" direction
 }
 ```
 
@@ -120,6 +120,7 @@ Each element of the `extracted_packing.items` field is an object describing the 
   "normal": [], // 3D array describing the normal orientation,
   "face_rotation": [], // 3D array describing the rotation of the hexagonal face, orthogonal to the "normal" vector
   "volume": ..., // volume of the particle
+  "mass": ..., // mass of the particle
   "vertices": [] // 12 x 3 coordinates of the vertices
 }
 ```
