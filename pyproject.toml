@@ -20,3 +20,8 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 packgen = { git = "https://github.com/cmt-dtu-energy/packgen", rev = "v0.3.0" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
