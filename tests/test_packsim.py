@@ -10,7 +10,7 @@ This module provides pytest-based tests for the packsim tool, including:
 from pathlib import Path
 import pytest
 
-from packsim import Particle, PackingSimulation
+from packsim import Particle, PackingSimulation, PackingResults
 
 PARTICLE_A = Particle(radius=1.0, thickness=0.2, density=1.0)
 PARTICLE_B = Particle(radius=0.5, thickness=0.1, density=1.2)
@@ -33,4 +33,4 @@ def packing_simulation_only_A(tmp_path: Path) -> PackingSimulation:
 def test_minimal_valid_input(packing_simulation_only_A: PackingSimulation):
     """Test minimal valid input with only Particle A."""
     packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
-    assert True  # Replace with actual assertions based on expected results
+    assert isinstance(packing_simulation_only_A, PackingResults)
