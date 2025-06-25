@@ -7,6 +7,8 @@ This module provides pytest-based tests for the packsim tool, including:
 - Invalid input handling
 """
 
+import math
+import json
 from pathlib import Path
 import pytest
 
@@ -42,3 +44,42 @@ def test_simulation_writes_intermediate_files(packing_results_only_A: PackingRes
     """Test that the simulation writes intermediate files."""
     assert packing_results_only_A.stl_path.exists()
     assert packing_results_only_A.blender_path.exists()
+
+
+def test_input_and_output_parameters_are_compatible(
+    packing_results_only_A: PackingResults,
+):
+    """Test that input and output parameters are compatible."""
+    assert packing_results_only_A.packgen_json_path.exists()
+    with open(packing_results_only_A.packgen_json_path) as f:
+        packgen_config = json.load(f)
+
+    assert math.isfinite(packgen_config["seed"])
+    assert packgen_config["scale"] == 1
+    assert math.isclose(packgen_config["r_A"], packing_results_only_A.particleA.radius)
+    assert math.isclose(
+        packgen_config["thickness_A"], packing_results_only_A.particleA.thickness
+    )
+    assert math.isclose(
+        packgen_config["density_A"], packing_results_only_A.particleA.density
+    )
+    assert math.isclose(
+        packgen_config["mass_fraction_B"], packing_results_only_A.mass_fraction_B
+    )
+    assert packing_results_only_A.num_cubes_xy == packgen_config["num_cubes_x"]
+    assert packing_results_only_A.num_cubes_xy == packgen_config["num_cubes_y"]
+    assert packing_results_only_A.num_cubes_z == packgen_config["num_cubes_z"]
+    assert math.isclose(
+        packing_results_only_A.L,
+        packgen_config["distance"] * packgen_config["num_cubes_x"],
+    )
+    if packing_results_only_A.particleB:
+        assert math.isclose(
+            packgen_config["r_B"], packing_results_only_A.particleB.radius
+        )
+        assert math.isclose(
+            packgen_config["thickness_B"], packing_results_only_A.particleB.thickness
+        )
+        assert math.isclose(
+            packgen_config["density_B"], packing_results_only_A.particleB.density
+        )

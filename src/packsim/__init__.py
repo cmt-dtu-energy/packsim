@@ -24,9 +24,30 @@ class PackingResults:
     """Results of a packing simulation."""
 
     def __init__(
-        self, stl_path: Path, blender_path: Path, packgen_json_path: Path
+        self,
+        particleA: Particle,
+        particleB: Particle | None,
+        mass_fraction_B: float,
+        num_cubes_xy: int,
+        num_cubes_z: int,
+        L: float,
+        workdir: Path,
+        cutoff: float,
+        cutoff_direction: str,
+        stl_path: Path,
+        blender_path: Path,
+        packgen_json_path: Path,
     ) -> None:
         """Initialize results from a packing simulation."""
+        self.particleA: Particle = particleA
+        self.particleB: Particle | None = particleB
+        self.mass_fraction_B: float = mass_fraction_B
+        self.num_cubes_xy: int = num_cubes_xy
+        self.num_cubes_z: int = num_cubes_z
+        self.L: float = L
+        self.workdir: Path = workdir
+        self.cutoff: float = cutoff
+        self.cutoff_direction: str = cutoff_direction
         self.stl_path: Path = stl_path
         self.blender_path: Path = blender_path
         self.packgen_json_path: Path = packgen_json_path
@@ -74,6 +95,15 @@ class PackingSimulation:
         """
         stl_path, blender_path, packgen_json_path = self._run_packgen()
         return PackingResults(
+            particleA=self.particleA,
+            particleB=self.particleB,
+            mass_fraction_B=self.mass_fraction_B,
+            num_cubes_xy=self.num_cubes_xy,
+            num_cubes_z=self.num_cubes_z,
+            L=self.L,
+            workdir=self.workdir,
+            cutoff=cutoff,
+            cutoff_direction=cutoff_direction,
             stl_path=stl_path,
             blender_path=blender_path,
             packgen_json_path=packgen_json_path,
