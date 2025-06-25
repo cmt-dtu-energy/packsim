@@ -19,6 +19,15 @@ class Particle:
         self.density: float = density
 
 
+class PackingResults:
+    """Results of a packing simulation."""
+
+    def __init__(self, stl_path: Path, blender_path: Path):
+        """Initialize results from a packing simulation."""
+        self.stl_path: Path = stl_path
+        self.blender_path: Path = blender_path
+
+
 class PackingSimulation:
     """Simulation for the process of packing particles."""
 
@@ -51,9 +60,16 @@ class PackingSimulation:
         self.L: float = L
         self.workdir: Path = workdir
 
-    def run(self, cutoff: float, cutoff_direction: str):
-        # Placeholder for the actual simulation logic
-        pass
+    def run(self, cutoff: float, cutoff_direction: str) -> PackingResults:
+        """Run the packing simulation.
+
+        Args:
+            cutoff (float): Cutoff distance for the simulation.
+            cutoff_direction (str): Direction of the cutoff, e.g., 'x', 'y', or 'z'.
+        """
+        stl_path = self.workdir / "packing.stl"
+        blender_path = self.workdir / "packing.blend"
+        return PackingResults(stl_path=stl_path, blender_path=blender_path)
 
 
 def main() -> None:

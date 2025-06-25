@@ -21,6 +21,7 @@ def packing_simulation_only_A(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> PackingSimulation:
     """Fixture for a packing simulation with only Particle A."""
+    tmp_path = tmp_path_factory.mktemp("packing_simulation_only_A")
     return PackingSimulation(
         particleA=PARTICLE_A,
         particleB=None,
@@ -34,5 +35,14 @@ def packing_simulation_only_A(
 
 def test_minimal_valid_input(packing_simulation_only_A: PackingSimulation):
     """Test minimal valid input with only Particle A."""
-    packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
-    assert isinstance(packing_simulation_only_A, PackingResults)
+    results = packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
+    assert isinstance(results, PackingResults)
+
+
+def test_simulation_writes_intermediate_files(
+    packing_simulation_only_A: PackingSimulation,
+):
+    """Test that the simulation writes intermediate files."""
+    results = packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
+    assert results.stl_path.exists()
+    assert results.blender_path.exists()
