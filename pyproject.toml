@@ -26,3 +26,7 @@ packgen = { git = "https://github.com/cmt-dtu-energy/packgen", rev = "v0.3.0" }
 dev = [
     "pytest>=8.4.1",
 ]
+
+[tool.ruff.lint]
+select = ["I"]
+
