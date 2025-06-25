@@ -17,9 +17,9 @@ PARTICLE_B = Particle(radius=0.5, thickness=0.1, density=1.2)
 
 
 @pytest.fixture(scope="module")
-def packing_simulation_only_A(
+def packing_results_only_A(
     tmp_path_factory: pytest.TempPathFactory,
-) -> PackingSimulation:
+) -> PackingResults:
     """Fixture for a packing simulation with only Particle A."""
     tmp_path = tmp_path_factory.mktemp("packing_simulation_only_A")
     return PackingSimulation(
@@ -30,19 +30,15 @@ def packing_simulation_only_A(
         num_cubes_z=10,
         L=10.0,
         workdir=tmp_path / "packing_simulation_only_A",
-    )
+    ).run(cutoff=0.1, cutoff_direction="x")
 
 
-def test_minimal_valid_input(packing_simulation_only_A: PackingSimulation):
+def test_minimal_valid_input(packing_results_only_A: PackingResults):
     """Test minimal valid input with only Particle A."""
-    results = packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
-    assert isinstance(results, PackingResults)
+    assert isinstance(packing_results_only_A, PackingResults)
 
 
-def test_simulation_writes_intermediate_files(
-    packing_simulation_only_A: PackingSimulation,
-):
+def test_simulation_writes_intermediate_files(packing_results_only_A: PackingResults):
     """Test that the simulation writes intermediate files."""
-    results = packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
-    assert results.stl_path.exists()
-    assert results.blender_path.exists()
+    assert packing_results_only_A.stl_path.exists()
+    assert packing_results_only_A.blender_path.exists()
