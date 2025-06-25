@@ -1,6 +1,7 @@
 """Module for simulating packing of particles."""
 
 from pathlib import Path
+import subprocess
 
 
 class Particle:
@@ -22,10 +23,13 @@ class Particle:
 class PackingResults:
     """Results of a packing simulation."""
 
-    def __init__(self, stl_path: Path, blender_path: Path):
+    def __init__(
+        self, stl_path: Path, blender_path: Path, packgen_json_path: Path
+    ) -> None:
         """Initialize results from a packing simulation."""
         self.stl_path: Path = stl_path
         self.blender_path: Path = blender_path
+        self.packgen_json_path: Path = packgen_json_path
 
 
 class PackingSimulation:
@@ -59,6 +63,7 @@ class PackingSimulation:
         self.num_cubes_z: int = num_cubes_z
         self.L: float = L
         self.workdir: Path = workdir
+        self.workdir.mkdir(parents=True, exist_ok=True)
 
     def run(self, cutoff: float, cutoff_direction: str) -> PackingResults:
         """Run the packing simulation.
@@ -67,10 +72,71 @@ class PackingSimulation:
             cutoff (float): Cutoff distance for the simulation.
             cutoff_direction (str): Direction of the cutoff, e.g., 'x', 'y', or 'z'.
         """
-        stl_path = self.workdir / "packing.stl"
-        blender_path = self.workdir / "packing.blend"
-        return PackingResults(stl_path=stl_path, blender_path=blender_path)
+        stl_path, blender_path, packgen_json_path = self._run_packgen()
+        return PackingResults(
+            stl_path=stl_path,
+            blender_path=blender_path,
+            packgen_json_path=packgen_json_path,
+        )
+
+    def _run_packgen(self) -> tuple[Path, Path, Path]:
+        """Run the packgen tool to generate the packing."""
+        # Create configuration for packgen based on the simulation parameters.
+        config = {
+            "seed": None,
+            "scale": 1,
+            # packgen does not accept zero values for the properties, even if the particle is not present.
+            "r_B": self.particleB.radius if self.particleB else 1,
+            "r_A": self.particleA.radius,
+            "thickness_B": self.particleB.thickness if self.particleB else 1,
+            "thickness_A": self.particleA.thickness,
+            "density_B": self.particleB.density if self.particleB else 1,
+            "density_A": self.particleA.density,
+            "mass_fraction_B": self.mass_fraction_B,
+            "num_cubes_x": self.num_cubes_xy,
+            "num_cubes_y": self.num_cubes_xy,
+            "num_cubes_z": self.num_cubes_z,
+            "num_sides": 6,
+            "distance": self.L / self.num_cubes_xy,
+            "quit_on_finish": True,
+        }
+
+        # create unique subdir inside workdir for this simulation
+        # subdirectories end with a number to ensure uniqueness
+        # workdir is a Path object
+        subdir = (
+            self.workdir / f"simulation_{len(list(self.workdir.glob('simulation_*')))}"
+        )
+        subdir.mkdir(parents=True, exist_ok=True)
+        # Save the configuration to a json file in the workdir.
+        basename = "parameters"
+        config_path = subdir / f"{basename}.json"
+        with open(config_path, "w") as f:
+            import json
+
+            json.dump(config, f, indent=4)
+
+        # Run the packgen command with the configuration file, from workdir.
+        packgen_args = ["packgen", "--", str(config_path)]
+        _ = subprocess.run(
+            packgen_args,
+            cwd=subdir,
+            check=True,
+        )
+        prefix = "packing"
+        stl_path = subdir / f"{prefix}_{basename}.stl"
+
+        # there's a bug in packgen that saves the blender file as "*.blender" instead of "*.blend
+        # so we rename it here
+        if (subdir / f"{prefix}_{basename}.blender").exists():
+            (subdir / f"{prefix}_{basename}.blender").rename(
+                subdir / f"{prefix}_{basename}.blend"
+            )
+        blender_path = subdir / f"{prefix}_{basename}.blend"
+        packgen_json_path = subdir / f"{prefix}_{basename}.json"
+        return stl_path, blender_path, packgen_json_path
 
 
+# This is a placeholder for the actual packgen command.
 def main() -> None:
     print("Hello from packsim!")
