@@ -1,7 +1,10 @@
 """Module for simulating packing of particles."""
 
+from typing import Any
 from pathlib import Path
 import subprocess
+import json
+from numpy.typing import ArrayLike
 
 
 class Particle:
@@ -18,6 +21,141 @@ class Particle:
         self.radius: float = radius
         self.thickness: float = thickness
         self.density: float = density
+
+
+class HexagonalPrism:
+    """A hexagonal prism particle in the packing."""
+
+    def __init__(
+        self,
+        radius: float,
+        thickness: float,
+        normal: ArrayLike,
+        position: ArrayLike,
+        face_rotation: ArrayLike,
+        vertices: ArrayLike,
+    ):
+        """Initialize a hexagonal prism particle with given properties.
+        Args:
+            radius (float): Radius of the hexagonal prism in meters.
+            thickness (float): Thickness of the hexagonal prism in meters.
+            normal (ArrayLike): Normal vector of the hexagonal prism.
+            position (ArrayLike): Position of the hexagonal prism in space.
+            face_rotation (ArrayLike): Rotation of the faces of the prism.
+            vertices (ArrayLike): Vertices of the hexagonal prism.
+        """
+
+        self.radius: float = radius
+        self.thickness: float = thickness
+        self.normal: ArrayLike = normal
+        self.position: ArrayLike = position
+        self.face_rotation: ArrayLike = face_rotation
+        self.vertices: ArrayLike = vertices
+
+        # Expression for the volume of a hexagonal prism
+        # from given circumscribed circle radius and thickness.
+        self.volume: float = 3 / 2 * (3**0.5) * self.radius**2 * self.thickness
+
+
+class ExtractedPacking:
+    """Class to handle the extraction of packing data from a simulation."""
+
+    def __init__(
+        self,
+        prisms: list[HexagonalPrism],
+        volume: float,
+        xmin: float,
+        xmax: float,
+        ymin: float,
+        ymax: float,
+        zmin: float,
+        zmax: float,
+        volumetric_filling_fraction: float,
+        average_alignment_x: float,
+        average_alignment_y: float,
+        average_alignment_z: float,
+        standard_deviation_alignment_x: float,
+        standard_deviation_alignment_y: float,
+        standard_deviation_alignment_z: float,
+        volume_weighted_average_alignment_x: float,
+        volume_weighted_average_alignment_y: float,
+        volume_weighted_average_alignment_z: float,
+        volume_weighted_standard_deviation_alignment_x: float,
+        volume_weighted_standard_deviation_alignment_y: float,
+        volume_weighted_standard_deviation_alignment_z: float,
+    ) -> None:
+        """Initialize the ExtractdPacking class."""
+        self.items = prisms
+        self.volume = volume
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+        self.zmin = zmin
+        self.zmax = zmax
+        self.volumetric_filling_fraction = volumetric_filling_fraction
+        self.average_alignment_x = average_alignment_x
+        self.average_alignment_y = average_alignment_y
+        self.average_alignment_z = average_alignment_z
+        self.standard_deviation_alignment_x = standard_deviation_alignment_x
+        self.standard_deviation_alignment_y = standard_deviation_alignment_y
+        self.standard_deviation_alignment_z = standard_deviation_alignment_z
+        self.volume_weighted_average_alignment_x = volume_weighted_average_alignment_x
+        self.volume_weighted_average_alignment_y = volume_weighted_average_alignment_y
+        self.volume_weighted_average_alignment_z = volume_weighted_average_alignment_z
+        self.volume_weighted_standard_deviation_alignment_x = (
+            (volume_weighted_standard_deviation_alignment_x),
+        )
+        self.volume_weighted_standard_deviation_alignment_y = (
+            (volume_weighted_standard_deviation_alignment_y),
+        )
+        self.volume_weighted_standard_deviation_alignment_z = (
+            volume_weighted_standard_deviation_alignment_z
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ExtractedPacking":
+        """Create an ExtractedPacking instance from a dictionary."""
+        prisms = [
+            HexagonalPrism(
+                radius=prism["radius"],
+                thickness=prism["thickness"],
+                normal=prism["normal"],
+                position=prism["position"],
+                face_rotation=prism["faceRotation"],
+                vertices=prism["vertices"],
+            )
+            for prism in data["items"]
+        ]
+        return cls(
+            prisms=prisms,
+            volume=data["volume"],
+            xmin=data["xmin"],
+            xmax=data["xmax"],
+            ymin=data["ymin"],
+            ymax=data["ymax"],
+            zmin=data["zmin"],
+            zmax=data["zmax"],
+            volumetric_filling_fraction=data["volumetricFillingFraction"],
+            average_alignment_x=data["averageAlignmentX"],
+            average_alignment_y=data["averageAlignmentY"],
+            average_alignment_z=data["averageAlignmentZ"],
+            standard_deviation_alignment_x=data["standardDeviationAlignmentX"],
+            standard_deviation_alignment_y=data["standardDeviationAlignmentY"],
+            standard_deviation_alignment_z=data["standardDeviationAlignmentZ"],
+            volume_weighted_average_alignment_x=data["volumeWeightedAverageAlignmentX"],
+            volume_weighted_average_alignment_y=data["volumeWeightedAverageAlignmentY"],
+            volume_weighted_average_alignment_z=data["volumeWeightedAverageAlignmentZ"],
+            volume_weighted_standard_deviation_alignment_x=data[
+                "volumeWeightedStandardDeviationAlignmentX"
+            ],
+            volume_weighted_standard_deviation_alignment_y=data[
+                "volumeWeightedStandardDeviationAlignmentY"
+            ],
+            volume_weighted_standard_deviation_alignment_z=data[
+                "volumeWeightedStandardDeviationAlignmentZ"
+            ],
+        )
 
 
 class PackingResults:
@@ -37,6 +175,7 @@ class PackingResults:
         stl_path: Path,
         blender_path: Path,
         packgen_json_path: Path,
+        extracted_packing: ExtractedPacking,
     ) -> None:
         """Initialize results from a packing simulation."""
         self.particleA: Particle = particleA
@@ -51,6 +190,7 @@ class PackingResults:
         self.stl_path: Path = stl_path
         self.blender_path: Path = blender_path
         self.packgen_json_path: Path = packgen_json_path
+        self.extracted_packing: ExtractedPacking = extracted_packing
 
 
 class PackingSimulation:
@@ -94,6 +234,7 @@ class PackingSimulation:
             cutoff_direction (str): Direction of the cutoff, e.g., 'x', 'y', or 'z'.
         """
         stl_path, blender_path, packgen_json_path = self._run_packgen()
+        extracted_packing = self._run_stl_extractor(stl_path)
         return PackingResults(
             particleA=self.particleA,
             particleB=self.particleB,
@@ -107,6 +248,7 @@ class PackingSimulation:
             stl_path=stl_path,
             blender_path=blender_path,
             packgen_json_path=packgen_json_path,
+            extracted_packing=extracted_packing,
         )
 
     def _run_packgen(self) -> tuple[Path, Path, Path]:
@@ -165,6 +307,24 @@ class PackingSimulation:
         blender_path = subdir / f"{prefix}_{basename}.blend"
         packgen_json_path = subdir / f"{prefix}_{basename}.json"
         return stl_path, blender_path, packgen_json_path
+
+    def _run_stl_extractor(self, stl_path: Path) -> ExtractedPacking:
+        stl_json_output = stl_path.parent / f"{stl_path.stem}_extracted.json"
+        args = [
+            "matlab",
+            "-batch",
+            f'STLextractToJSON("{stl_path}","{str(stl_json_output)}")',
+        ]
+        _ = subprocess.run(
+            args,
+            cwd=stl_path.parent,
+            check=True,
+        )
+        # Load the extracted packing data from the JSON file.
+        with open(stl_json_output) as f:
+            data = json.load(f)
+
+        return ExtractedPacking.from_dict(data)
 
 
 # This is a placeholder for the actual packgen command.

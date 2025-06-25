@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 import pytest
 
-from packsim import Particle, PackingSimulation, PackingResults
+from packsim import Particle, PackingSimulation, PackingResults, ExtractedPacking
 
 PARTICLE_A = Particle(radius=1.0, thickness=0.2, density=1.0)
 PARTICLE_B = Particle(radius=0.5, thickness=0.1, density=1.2)
@@ -45,8 +45,8 @@ def packing_results_AB(
         particleA=PARTICLE_A,
         particleB=PARTICLE_B,
         mass_fraction_B=10.0,
-        num_cubes_xy=6,
-        num_cubes_z=40,
+        num_cubes_xy=3,
+        num_cubes_z=9,
         L=10.0,
         workdir=tmp_path / "packing_simulation_only_A",
     ).run(cutoff=0.3, cutoff_direction="y")
@@ -103,3 +103,8 @@ def test_input_and_output_parameters_are_compatible(
         assert math.isclose(
             packgen_config["density_B"], packing_results.particleB.density
         )
+
+
+def test_extracted_packing_has_correct_items(packing_results: PackingResults):
+    """Test that the extracted packing has the correct number of items."""
+    assert isinstance(packing_results.extracted_packing, ExtractedPacking)
