@@ -16,8 +16,10 @@ PARTICLE_A = Particle(radius=1.0, thickness=0.2, density=1.0)
 PARTICLE_B = Particle(radius=0.5, thickness=0.1, density=1.2)
 
 
-@pytest.fixture
-def packing_simulation_only_A(tmp_path: Path) -> PackingSimulation:
+@pytest.fixture(scope="module")
+def packing_simulation_only_A(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> PackingSimulation:
     """Fixture for a packing simulation with only Particle A."""
     return PackingSimulation(
         particleA=PARTICLE_A,
