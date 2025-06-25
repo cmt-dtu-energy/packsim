@@ -32,5 +32,5 @@ def packing_simulation_only_A(tmp_path: Path) -> PackingSimulation:
 
 def test_minimal_valid_input(packing_simulation_only_A: PackingSimulation):
     """Test minimal valid input with only Particle A."""
-    packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x", n=1000)
+    packing_simulation_only_A.run(cutoff=0.1, cutoff_direction="x")
     assert True  # Replace with actual assertions based on expected results
