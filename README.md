@@ -110,7 +110,7 @@ Each array element is an object with the following fields:
 }
 ```
 
-Each element of the `extracted_packing.items` field is an object describing the final field of each particle:
+Each element of the `extracted_packing.items` field is an object describing the final state of each particle:
 
 ```json
 {
