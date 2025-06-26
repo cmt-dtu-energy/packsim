@@ -44,7 +44,7 @@ def packing_results_AB(
     return PackingSimulation(
         particleA=PARTICLE_A,
         particleB=PARTICLE_B,
-        mass_fraction_B=10.0,
+        mass_fraction_B=0.1,
         num_cubes_xy=3,
         num_cubes_z=9,
         L=10.0,
