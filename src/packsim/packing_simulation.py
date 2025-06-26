@@ -127,6 +127,8 @@ class PackingSimulation:
             packgen_args,
             cwd=subdir,
             check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         prefix = "packing"
         stl_path = subdir / f"{prefix}_{basename}.stl"
@@ -149,6 +151,8 @@ class PackingSimulation:
             args,
             cwd=stl_path.parent,
             check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         with open(stl_json_output) as f:
             data = json.load(f)

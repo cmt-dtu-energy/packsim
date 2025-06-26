@@ -5,11 +5,10 @@ description = "Simulator of the process of packing particles"
 readme = "README.md"
 authors = [{ name = "Fábio Pinto Fortkamp", email = "fabio@fabiofortkamp.com" }]
 requires-python = ">=3.11, <3.12"
-dependencies = ["numpy>=2.3.1", "packgen"]
+dependencies = ["numpy>=2.3.1", "packgen", "typer[all]>=0.16.0"]
 
 [project.scripts]
-packsim = "packsim:main"
-
+packsim = "packsim.cli:app"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

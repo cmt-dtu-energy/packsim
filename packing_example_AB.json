@@ -1,0 +1,20 @@
+{
+    "particle_A": {
+        "radius": 1.0,
+        "thickness": 0.2,
+        "density": 1.0
+    },
+    "particle_B": {
+        "radius": 0.5,
+        "thickness": 0.1,
+        "density": 1.2
+    },
+    "mass_fraction_B": 10.0,
+    "num_cubes_xy": 3,
+    "num_cubes_z": 9,
+    "L": 10.0,
+    "work_dir": ".",
+    "cutoff": 0.3,
+    "cutoff_direction": "y",
+    "n": 1
+}
