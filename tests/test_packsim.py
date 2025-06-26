@@ -106,3 +106,26 @@ def test_extracted_packing_has_correct_items(request, packing_results_fixture):
     """Test that the extracted packing has the correct number of items."""
     packing_results = request.getfixturevalue(packing_results_fixture)
     assert isinstance(packing_results.extracted_packing, ExtractedPacking)
+
+
+def test_run_parallel(tmp_path):
+    """Test that run_parallel runs n simulations concurrently and returns correct results."""
+    sim = PackingSimulation(
+        particleA=PARTICLE_A,
+        particleB=PARTICLE_B,
+        mass_fraction_B=0.5,
+        num_cubes_xy=2,
+        num_cubes_z=2,
+        L=2.0,
+        workdir=tmp_path,
+    )
+    n = 3
+    results = sim.run_parallel(cutoff=0.1, cutoff_direction="x", n=n)
+    assert isinstance(results, list)
+    assert len(results) == n
+    for i, res in enumerate(results):
+        assert res.stl_path.exists()
+        assert res.blender_path.exists()
+        assert res.packgen_json_path.exists()
+        assert res.workdir == tmp_path
+        assert isinstance(res.extracted_packing, ExtractedPacking)

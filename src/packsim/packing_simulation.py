@@ -40,15 +40,16 @@ class PackingSimulation:
         self.workdir: Path = workdir
         self.workdir.mkdir(parents=True, exist_ok=True)
 
-    def run(self, cutoff: float, cutoff_direction: str) -> PackingResults:
+    def run(self, cutoff: float, cutoff_direction: str, i: int = 1) -> PackingResults:
         """Run the packing simulation.
 
         Args:
             cutoff (float): Cutoff distance for the simulation.
             cutoff_direction (str): Direction of the cutoff, e.g.,
                 'x', 'y', or 'z'.
+            i (int, optional): Simulation index for parallel runs. Defaults to 1.
         """
-        stl_path, blender_path, packgen_json_path = self._run_packgen()
+        stl_path, blender_path, packgen_json_path = self._run_packgen(i=i)
         extracted_packing = self._run_stl_extractor(stl_path)
         return PackingResults(
             particleA=self.particleA,
@@ -66,8 +67,38 @@ class PackingSimulation:
             extracted_packing=extracted_packing,
         )
 
-    def _run_packgen(self) -> tuple[Path, Path, Path]:
-        """Run the packgen tool to generate the packing."""
+    def run_parallel(
+        self, cutoff: float, cutoff_direction: str, n: int
+    ) -> list["PackingResults"]:
+        """Run the packing simulation n times in parallel.
+
+        Args:
+            cutoff (float): Cutoff distance for the simulation.
+            cutoff_direction (str): Direction of the cutoff, e.g., 'x', 'y', or 'z'.
+            n (int): Number of parallel simulations to run.
+
+        Returns:
+            list[PackingResults]: List of PackingResults for each simulation.
+        """
+        import concurrent.futures
+
+        results = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(self.run, cutoff, cutoff_direction, i) for i in range(n)
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                results.append(future.result())
+        # Sort results by simulation index to preserve order
+        results.sort(key=lambda r: r.workdir)
+        return results
+
+    def _run_packgen(self, i: int = 1) -> tuple[Path, Path, Path]:
+        """Run the packgen tool to generate the packing.
+
+        Args:
+            i (int, optional): Simulation index for parallel runs. Defaults to 1.
+        """
         config = {
             "seed": None,
             "scale": 1,
@@ -85,9 +116,7 @@ class PackingSimulation:
             "distance": self.L / self.num_cubes_xy,
             "quit_on_finish": True,
         }
-        subdir = (
-            self.workdir / f"simulation_{len(list(self.workdir.glob('simulation_*')))}"
-        )
+        subdir = self.workdir / f"simulation_{i}"
         subdir.mkdir(parents=True, exist_ok=True)
         basename = "parameters"
         config_path = subdir / f"{basename}.json"
