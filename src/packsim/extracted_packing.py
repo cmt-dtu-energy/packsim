@@ -46,13 +46,9 @@ class ExtractedPacking:
         self.standard_deviation_alignment_x = standard_deviation_alignment_x
         self.standard_deviation_alignment_y = standard_deviation_alignment_y
         self.standard_deviation_alignment_z = standard_deviation_alignment_z
-        self.volume_weighted_average_alignment_x = (
-            volume_weighted_average_alignment_x
-        )
-        self.volume_weighted_average_alignment_y = (
-            volume_weighted_average_alignment_y)
-        self.volume_weighted_average_alignment_z = (
-            volume_weighted_average_alignment_z)
+        self.volume_weighted_average_alignment_x = volume_weighted_average_alignment_x
+        self.volume_weighted_average_alignment_y = volume_weighted_average_alignment_y
+        self.volume_weighted_average_alignment_z = volume_weighted_average_alignment_z
         self.volume_weighted_standard_deviation_alignment_x = (
             volume_weighted_standard_deviation_alignment_x
         )

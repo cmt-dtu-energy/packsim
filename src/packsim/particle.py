@@ -1,6 +1,3 @@
-from numpy.typing import ArrayLike
-
-
 class Particle:
     """A single particle in the packing."""
 

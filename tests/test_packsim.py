@@ -7,12 +7,12 @@ This module provides pytest-based tests for the packsim tool, including:
 - Invalid input handling
 """
 
-import math
 import json
-from pathlib import Path
+import math
+
 import pytest
 
-from packsim import Particle, PackingSimulation, PackingResults, ExtractedPacking
+from packsim import ExtractedPacking, PackingResults, PackingSimulation, Particle
 
 PARTICLE_A = Particle(radius=1.0, thickness=0.2, density=1.0)
 PARTICLE_B = Particle(radius=0.5, thickness=0.1, density=1.2)
