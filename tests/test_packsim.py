@@ -52,28 +52,24 @@ def packing_results_AB(
     ).run(cutoff=0.3, cutoff_direction="y")
 
 
-@pytest.fixture(scope="module", params=["A", "AB"])
-def packing_results(
-    request, packing_results_only_A, packing_results_AB
-) -> PackingResults:
-    """Fixture for packing simulation results."""
-    match request.param:
-        case "A":
-            return packing_results_only_A
-        case "AB":
-            return packing_results_AB
+SIMULATION_FIXTURES = [
+    "packing_results_only_A",
+    "packing_results_AB",
+]
 
 
-def test_simulation_writes_intermediate_files(packing_results: PackingResults):
+@pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
+def test_simulation_writes_intermediate_files(request, packing_results_fixture):
     """Test that the simulation writes intermediate files."""
+    packing_results = request.getfixturevalue(packing_results_fixture)
     assert packing_results.stl_path.exists()
     assert packing_results.blender_path.exists()
 
 
-def test_input_and_output_parameters_are_compatible(
-    packing_results: PackingResults,
-):
+@pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
+def test_input_and_output_parameters_are_compatible(request, packing_results_fixture):
     """Test that input and output parameters are compatible."""
+    packing_results = request.getfixturevalue(packing_results_fixture)
     assert packing_results.packgen_json_path.exists()
     with open(packing_results.packgen_json_path) as f:
         packgen_config = json.load(f)
@@ -105,6 +101,8 @@ def test_input_and_output_parameters_are_compatible(
         )
 
 
-def test_extracted_packing_has_correct_items(packing_results: PackingResults):
+@pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
+def test_extracted_packing_has_correct_items(request, packing_results_fixture):
     """Test that the extracted packing has the correct number of items."""
+    packing_results = request.getfixturevalue(packing_results_fixture)
     assert isinstance(packing_results.extracted_packing, ExtractedPacking)
