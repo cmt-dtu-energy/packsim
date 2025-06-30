@@ -86,7 +86,10 @@ def main(
     num_cubes_xy = config["num_cubes_xy"]
     num_cubes_z = config["num_cubes_z"]
     L = config["L"]
-    workdir = Path(config["work_dir"]).resolve()
+
+    # resolve workdir relative to the path of the input file
+    basedir = input_file.parent if input_file else Path.cwd()
+    workdir = (basedir / Path(config["work_dir"])).resolve()
 
     # Arguments for run/run_parallel
     cutoff = config.get("cutoff", 0.1)
