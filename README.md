@@ -107,8 +107,12 @@ Each array element is an object with the following fields:
     "volume_weighted_average_alignment_x": ..., // same as above, but using each particle's volume as weigth and normalizing with the box volume
     "volume_weighted_standard_deviation_alignment_x": ..., // standard deviation of the statistic described above
     // likewise, the fields above are defined for the "y" and "z" direction
+    "Lx": ..., // length of the box container in the x direction
+    "Ly": ..., // length of the box container in the y direction
+    "Lz": ..., // length of the box container in the z direction
+    "actual_mass_fraction_B": ..., // actual mass fraction of particle B in the packing, after considering the cutoff
+
 }
-```
 
 Each element of the `extracted_packing.items` field is an object describing the final state of each particle:
 
@@ -120,8 +124,14 @@ Each element of the `extracted_packing.items` field is an object describing the 
   "normal": [], // 3D array describing the normal orientation,
   "face_rotation": [], // 3D array describing the rotation of the hexagonal face, orthogonal to the "normal" vector
   "volume": ..., // volume of the particle
+  "density": ..., // density of the particle
   "mass": ..., // mass of the particle
-  "vertices": [] // 12 x 3 coordinates of the vertices
+  "vertices": [], // 12 x 3 coordinates of the vertices
+  "triangulation": {
+    "points": [], // list of 3D points (vertices) of the triangulation
+    "connectivity_list": [] // 2D array of triangle vertex indices
+  }
+
 }
 ```
 
