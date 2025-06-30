@@ -9,6 +9,7 @@ This module provides pytest-based tests for the packsim tool, including:
 
 import json
 import math
+from pathlib import Path
 
 import pytest
 
@@ -59,7 +60,9 @@ SIMULATION_FIXTURES = [
 
 
 @pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
-def test_simulation_writes_intermediate_files(request, packing_results_fixture):
+def test_simulation_writes_intermediate_files(
+    request: pytest.FixtureRequest, packing_results_fixture: str
+):
     """Test that the simulation writes intermediate files."""
     packing_results = request.getfixturevalue(packing_results_fixture)
     assert packing_results.stl_path.exists()
@@ -67,7 +70,9 @@ def test_simulation_writes_intermediate_files(request, packing_results_fixture):
 
 
 @pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
-def test_input_and_output_parameters_are_compatible(request, packing_results_fixture):
+def test_input_and_output_parameters_are_compatible(
+    request: pytest.FixtureRequest, packing_results_fixture: str
+):
     """Test that input and output parameters are compatible."""
     packing_results = request.getfixturevalue(packing_results_fixture)
     assert packing_results.packgen_json_path.exists()
@@ -102,7 +107,9 @@ def test_input_and_output_parameters_are_compatible(request, packing_results_fix
 
 
 @pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
-def test_extracted_packing_has_correct_items(request, packing_results_fixture):
+def test_extracted_packing_has_correct_items(
+    request: pytest.FixtureRequest, packing_results_fixture: str
+):
     """Test that the extracted packing has the correct number of items."""
     packing_results = request.getfixturevalue(packing_results_fixture)
     assert isinstance(packing_results.extracted_packing, ExtractedPacking)
@@ -114,7 +121,7 @@ def test_extracted_packing_has_correct_items(request, packing_results_fixture):
     )
 
 
-def test_run_parallel(tmp_path):
+def test_run_parallel(tmp_path: Path):
     """Test that run_parallel runs n simulations concurrently and returns correct results."""
     sim = PackingSimulation(
         particleA=PARTICLE_A,
@@ -135,3 +142,31 @@ def test_run_parallel(tmp_path):
         assert res.packgen_json_path.exists()
         assert res.workdir == tmp_path
         assert isinstance(res.extracted_packing, ExtractedPacking)
+
+
+@pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
+def test_particles_have_correct_mass(
+    request: pytest.FixtureRequest, packing_results_fixture: str
+):
+    """Test that particles have correct mass based on their density and volume."""
+    packing_results = request.getfixturevalue(packing_results_fixture)
+    prisms = packing_results.extracted_packing.items
+    expected_density = float("nan")
+    for prism in prisms:
+        if math.isclose(
+            prism.radius, packing_results.particleA.radius, rel_tol=1e-3
+        ) and math.isclose(
+            prism.thickness, packing_results.particleA.thickness, rel_tol=1e-3
+        ):
+            expected_density = packing_results.particleA.density
+        elif (
+            packing_results.particleB
+            and math.isclose(
+                prism.radius, packing_results.particleB.radius, rel_tol=1e-3
+            )
+            and math.isclose(
+                prism.thickness, packing_results.particleB.thickness, rel_tol=1e-3
+            )
+        ):
+            expected_density = packing_results.particleB.density
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)

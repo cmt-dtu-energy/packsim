@@ -12,3 +12,12 @@ class Particle:
         self.radius: float = radius
         self.thickness: float = thickness
         self.density: float = density
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Particle":
+        """Create a Particle instance from a dictionary."""
+        return cls(
+            radius=data["radius"],
+            thickness=data["thickness"],
+            density=data["density"],
+        )

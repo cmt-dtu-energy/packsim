@@ -1,4 +1,5 @@
 import json
+import math
 import subprocess
 from pathlib import Path
 
@@ -156,4 +157,38 @@ class PackingSimulation:
         )
         with open(stl_json_output) as f:
             data = json.load(f)
+
+        self._post_process_data_from_stl_extractor(data)
         return ExtractedPacking.from_dict(data)
+
+    def _post_process_data_from_stl_extractor(self, data: dict) -> None:
+        """Post-process the data extracted from the STL file."""
+
+        data["particleA"] = {
+            "radius": self.particleA.radius,
+            "thickness": self.particleA.thickness,
+            "density": self.particleA.density,
+        }
+        if self.particleB:
+            data["particleB"] = {
+                "radius": self.particleB.radius,
+                "thickness": self.particleB.thickness,
+                "density": self.particleB.density,
+            }
+        else:
+            data["particleB"] = None
+        for prism in data.get("items", []):
+            if math.isclose(
+                prism["radius"], self.particleA.radius, rel_tol=1e-3
+            ) and math.isclose(
+                prism["thickness"], self.particleA.thickness, rel_tol=1e-3
+            ):
+                prism["density"] = prism.get("density", self.particleA.density)
+            elif (
+                self.particleB
+                and math.isclose(prism["radius"], self.particleB.radius, rel_tol=1e-3)
+                and math.isclose(
+                    prism["thickness"], self.particleB.thickness, rel_tol=1e-3
+                )
+            ):
+                prism["density"] = prism.get("density", self.particleB.density)

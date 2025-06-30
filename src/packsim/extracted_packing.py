@@ -1,6 +1,8 @@
+import math
 from typing import Any
 
 from .hexagonal_prism import HexagonalPrism
+from .particle import Particle
 
 
 class ExtractedPacking:
@@ -9,6 +11,8 @@ class ExtractedPacking:
     def __init__(
         self,
         prisms: list[HexagonalPrism],
+        particleA: Particle,
+        particleB: Particle | None,
         volume: float,
         xmin: float,
         xmax: float,
@@ -29,6 +33,9 @@ class ExtractedPacking:
         volume_weighted_standard_deviation_alignment_x: float,
         volume_weighted_standard_deviation_alignment_y: float,
         volume_weighted_standard_deviation_alignment_z: float,
+        Lx: float,
+        Ly: float,
+        Lz: float,
     ) -> None:
         """Initialize the ExtractdPacking class."""
         self.items = prisms
@@ -58,6 +65,12 @@ class ExtractedPacking:
         self.volume_weighted_standard_deviation_alignment_z = (
             volume_weighted_standard_deviation_alignment_z
         )
+        self.particleA: Particle = particleA
+        self.particleB: Particle | None = particleB
+        self.actual_mass_fraction_B = self._calculate_mass_fraction_B()
+        self.Lx = Lx
+        self.Ly = Ly
+        self.Lz = Lz
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ExtractedPacking":
@@ -70,12 +83,17 @@ class ExtractedPacking:
                 position=prism["position"],
                 face_rotation=prism["faceRotation"],
                 vertices=prism["vertices"],
+                density=prism["density"],
             )
             for prism in data["items"]
         ]
         return cls(
             prisms=prisms,
             volume=data["volume"],
+            particleA=Particle.from_dict(data["particleA"]),
+            particleB=Particle.from_dict(data["particleB"])
+            if data.get("particleB") is not None
+            else None,
             xmin=data["xmin"],
             xmax=data["xmax"],
             ymin=data["ymin"],
@@ -107,4 +125,21 @@ class ExtractedPacking:
             volume_weighted_standard_deviation_alignment_z=data[
                 "volumeWeightedStandardDeviationAlignmentZ"
             ],
+            Lx=data["Lx"],
+            Ly=data["Ly"],
+            Lz=data["Lz"],
         )
+
+    def _calculate_mass_fraction_B(self) -> float:
+        """Calculate the mass fraction of particle B in the packing."""
+        if self.particleB is None:
+            return 0.0
+        total_mass = sum(prism.mass for prism in self.items)
+        if total_mass == 0:
+            return 0.0
+        mass_B = sum(
+            prism.mass
+            for prism in self.items
+            if math.isclose(prism.density, self.particleB.density, rel_tol=1e-3)
+        )
+        return mass_B / total_mass if total_mass > 0 else 0.0
