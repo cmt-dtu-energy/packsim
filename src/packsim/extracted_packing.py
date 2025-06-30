@@ -1,7 +1,7 @@
 import math
 from typing import Any
 
-from .hexagonal_prism import HexagonalPrism
+from .hexagonal_prism import HexagonalPrism, Triangulation
 from .particle import Particle
 
 
@@ -84,6 +84,7 @@ class ExtractedPacking:
                 face_rotation=prism["faceRotation"],
                 vertices=prism["vertices"],
                 density=prism["density"],
+                triangulation=Triangulation.from_dict(prism["triangulation"]),
             )
             for prism in data["items"]
         ]

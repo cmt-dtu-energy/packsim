@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from packsim import ExtractedPacking, PackingResults, PackingSimulation, Particle
+from packsim.hexagonal_prism import HexagonalPrism, Triangulation
 
 PARTICLE_A = Particle(radius=1.0, thickness=0.2, density=1.0)
 PARTICLE_B = Particle(radius=0.5, thickness=0.1, density=1.2)
@@ -119,6 +120,9 @@ def test_extracted_packing_has_correct_items(
         * packing_results.num_cubes_xy
         * packing_results.num_cubes_z
     )
+    for prism in packing_results.extracted_packing.items:
+        assert isinstance(prism, HexagonalPrism)
+        assert isinstance(prism.triangulation, Triangulation)
 
 
 def test_run_parallel(tmp_path: Path):
@@ -142,6 +146,9 @@ def test_run_parallel(tmp_path: Path):
         assert res.packgen_json_path.exists()
         assert res.workdir == tmp_path
         assert isinstance(res.extracted_packing, ExtractedPacking)
+        for prism in res.extracted_packing.items:
+            assert isinstance(prism, HexagonalPrism)
+            assert isinstance(prism.triangulation, Triangulation)
 
 
 @pytest.mark.parametrize("packing_results_fixture", SIMULATION_FIXTURES)
