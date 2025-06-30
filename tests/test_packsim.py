@@ -106,6 +106,12 @@ def test_extracted_packing_has_correct_items(request, packing_results_fixture):
     """Test that the extracted packing has the correct number of items."""
     packing_results = request.getfixturevalue(packing_results_fixture)
     assert isinstance(packing_results.extracted_packing, ExtractedPacking)
+    assert (
+        len(packing_results.extracted_packing.items)
+        == packing_results.num_cubes_xy
+        * packing_results.num_cubes_xy
+        * packing_results.num_cubes_z
+    )
 
 
 def test_run_parallel(tmp_path):
