@@ -179,16 +179,26 @@ class PackingSimulation:
             data["particleB"] = None
         for prism in data.get("items", []):
             if math.isclose(
-                prism["radius"], self.particleA.radius, rel_tol=1e-3
+                prism["radius"], self.particleA.radius, rel_tol=1e-3, abs_tol=1e-4
             ) and math.isclose(
-                prism["thickness"], self.particleA.thickness, rel_tol=1e-3
+                prism["thickness"], self.particleA.thickness, rel_tol=1e-3, abs_tol=1e-4
             ):
                 prism["density"] = prism.get("density", self.particleA.density)
             elif (
                 self.particleB
-                and math.isclose(prism["radius"], self.particleB.radius, rel_tol=1e-3)
                 and math.isclose(
-                    prism["thickness"], self.particleB.thickness, rel_tol=1e-3
+                    prism["radius"], self.particleB.radius, rel_tol=1e-3, abs_tol=1e-4
+                )
+                and math.isclose(
+                    prism["thickness"],
+                    self.particleB.thickness,
+                    rel_tol=1e-3,
+                    abs_tol=1e-4,
                 )
             ):
                 prism["density"] = prism.get("density", self.particleB.density)
+            else:
+                raise ValueError(
+                    "Prism does not match either particle A or B. "
+                    f"Prism: {prism}, Particle A: {self.particleA}, Particle B: {self.particleB}"
+                )
