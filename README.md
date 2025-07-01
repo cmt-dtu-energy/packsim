@@ -33,7 +33,7 @@ Please notice that, although projects listed below are open-sourced,
 Install `packsim` with:
 
 ```shell
-uv pip instal git+https://https://github.com/cmt-dtu-energy/packsim
+uv pip install git+https://github.com/cmt-dtu-energy/packsim@v0.2.0
 ```
 
 ## Usage as command-line tool
