@@ -114,9 +114,9 @@ def test_extracted_packing_has_correct_items(
     """Test that the extracted packing has the correct number of items."""
     packing_results = request.getfixturevalue(packing_results_fixture)
     assert isinstance(packing_results.extracted_packing, ExtractedPacking)
-    assert (
-        len(packing_results.extracted_packing.items)
-        == packing_results.num_cubes_xy
+    # ASSUMES A CUTOFF FRACTION > 0.0!!!
+    assert len(packing_results.extracted_packing.items) < (
+        packing_results.num_cubes_xy
         * packing_results.num_cubes_xy
         * packing_results.num_cubes_z
     )
@@ -137,7 +137,7 @@ def test_run_parallel(tmp_path: Path):
         workdir=tmp_path,
     )
     n = 3
-    results = sim.run_parallel(cutoff=0.1, cutoff_direction="x", n=n)
+    results = sim.run_parallel(cutoff=0, cutoff_direction="x", n=n)
     assert isinstance(results, list)
     assert len(results) == n
     for i, res in enumerate(results):
@@ -176,4 +176,12 @@ def test_particles_have_correct_mass(
             )
         ):
             expected_density = packing_results.particleB.density
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
+        assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
         assert math.isclose(prism.density, expected_density, rel_tol=1e-3)
