@@ -51,7 +51,9 @@ class PackingSimulation:
             i (int, optional): Simulation index for parallel runs. Defaults to 1.
         """
         stl_path, blender_path, packgen_json_path = self._run_packgen(i=i)
-        extracted_packing = self._run_stl_extractor(stl_path)
+        extracted_packing = self._run_stl_extractor(
+            stl_path, cutoff=cutoff, cutoff_direction=cutoff_direction
+        )
         return PackingResults(
             particleA=self.particleA,
             particleB=self.particleB,
@@ -141,12 +143,14 @@ class PackingSimulation:
         packgen_json_path = subdir / f"{prefix}_{basename}.json"
         return stl_path, blender_path, packgen_json_path
 
-    def _run_stl_extractor(self, stl_path: Path) -> ExtractedPacking:
+    def _run_stl_extractor(
+        self, stl_path: Path, cutoff: float, cutoff_direction: str
+    ) -> ExtractedPacking:
         stl_json_output = stl_path.parent / f"{stl_path.stem}_extracted.json"
         args = [
             "matlab",
             "-batch",
-            f'STLextractToJSON("{stl_path}","{str(stl_json_output)}")',
+            f'STLextractToJSON("{stl_path}","{str(stl_json_output)}", {cutoff}, "{cutoff_direction}")',
         ]
         _ = subprocess.run(
             args,
