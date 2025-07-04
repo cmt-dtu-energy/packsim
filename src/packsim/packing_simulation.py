@@ -150,7 +150,7 @@ class PackingSimulation:
         args = [
             "matlab",
             "-batch",
-            f'STLextractToJSON("{stl_path}","{str(stl_json_output)}", "RemoveOutlierRangez",true,"OutlierZThreshold",0,"Cutoff",{cutoff}, "CutoffDirection","{cutoff_direction}"),"BoundingBoxLength",{self.L}',
+            f'STLextractToJSON("{stl_path}","{str(stl_json_output)}", "RemoveOutlierRangez",true,"OutlierZThreshold",0,"Cutoff",{cutoff}, "CutoffDirection","{cutoff_direction}","BoundingBoxLength",{self.L})',
         ]
         _ = subprocess.run(
             args,
