@@ -5,7 +5,7 @@ from typing import Annotated, Optional
 
 import typer
 
-from .packing_simulation import PackingSimulation
+from .packing_simulation import PackingSimulation, SimulationError
 from .particle import Particle
 
 app = typer.Typer(help="packsim: Simulate the process of packing particles in a box.")
@@ -24,6 +24,12 @@ class PackSimJSONEncoder(json.JSONEncoder):
         # Handle Particle and other custom classes
         if hasattr(o, "to_dict"):
             return o.to_dict()
+        if isinstance(o, SimulationError):
+            return {
+                "simulation_index": o.simulation_index,
+                "error_message": o.error_message,
+                "error_type": o.error_type,
+            }
         if hasattr(o, "__dict__"):
             return o.__dict__
         if isinstance(o, Path):
@@ -107,11 +113,42 @@ def main(
     )
 
     if n == 1:
-        results = [sim.run(cutoff, cutoff_direction)]
+        result = sim.run(cutoff, cutoff_direction)
+        if isinstance(result, SimulationError):
+            typer.echo(f"Simulation failed: {result.error_message}", err=True)
+            raise typer.Exit(code=1)
+        results = [result]
+        errors: list[SimulationError] = []
     else:
-        results = sim.run_parallel(cutoff, cutoff_direction, n)
+        results, errors = sim.run_parallel(cutoff, cutoff_direction, n)
 
-    output_json = json.dumps(results, indent=2, cls=PackSimJSONEncoder)
+        # Report any errors to stderr
+        if errors:
+            typer.echo(
+                f"Warning: {len(errors)} out of {n} simulations failed:", err=True
+            )
+            for error in errors:
+                typer.echo(
+                    f"  Simulation {error.simulation_index}: {error.error_message}",
+                    err=True,
+                )
+
+        if not results:
+            typer.echo("Error: All simulations failed.", err=True)
+            raise typer.Exit(code=1)
+
+    # Prepare output with both results and error summary
+    output_data = {
+        "successful_results": results,
+        "total_requested": n,
+        "successful_count": len(results),
+        "failed_count": len(errors),
+    }
+
+    if errors:
+        output_data["errors"] = errors
+
+    output_json = json.dumps(output_data, indent=2, cls=PackSimJSONEncoder)
 
     if o is not None:
         with open(o, "w") as f:
