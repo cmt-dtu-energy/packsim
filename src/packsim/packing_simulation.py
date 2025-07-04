@@ -8,6 +8,18 @@ from .packing_results import PackingResults
 from .particle import Particle
 
 
+class SimulationError:
+    """Represents an error that occurred during simulation."""
+
+    def __init__(self, simulation_index: int, error_message: str, error_type: str):
+        self.simulation_index = simulation_index
+        self.error_message = error_message
+        self.error_type = error_type
+
+    def __repr__(self):
+        return f"SimulationError(index={self.simulation_index}, type={self.error_type}, message='{self.error_message}')"
+
+
 class PackingSimulation:
     """Simulation for the process of packing particles."""
 
@@ -41,7 +53,9 @@ class PackingSimulation:
         self.workdir: Path = workdir
         self.workdir.mkdir(parents=True, exist_ok=True)
 
-    def run(self, cutoff: float, cutoff_direction: str, i: int = 1) -> PackingResults:
+    def run(
+        self, cutoff: float, cutoff_direction: str, i: int = 1
+    ) -> "PackingResults | SimulationError":
         """Run the packing simulation.
 
         Args:
@@ -49,30 +63,58 @@ class PackingSimulation:
             cutoff_direction (str): Direction of the cutoff, e.g.,
                 'x', 'y', or 'z'.
             i (int, optional): Simulation index for parallel runs. Defaults to 1.
+
+        Returns:
+            PackingResults or SimulationError: Results of the simulation or error information.
         """
-        stl_path, blender_path, packgen_json_path = self._run_packgen(i=i)
-        extracted_packing = self._run_stl_extractor(
-            stl_path, cutoff=cutoff, cutoff_direction=cutoff_direction
-        )
-        return PackingResults(
-            particleA=self.particleA,
-            particleB=self.particleB,
-            mass_fraction_B=self.mass_fraction_B,
-            num_cubes_xy=self.num_cubes_xy,
-            num_cubes_z=self.num_cubes_z,
-            L=self.L,
-            workdir=self.workdir,
-            cutoff=cutoff,
-            cutoff_direction=cutoff_direction,
-            stl_path=stl_path,
-            blender_path=blender_path,
-            packgen_json_path=packgen_json_path,
-            extracted_packing=extracted_packing,
-        )
+        try:
+            stl_path, blender_path, packgen_json_path = self._run_packgen(i=i)
+            extracted_packing = self._run_stl_extractor(
+                stl_path, cutoff=cutoff, cutoff_direction=cutoff_direction
+            )
+            return PackingResults(
+                particleA=self.particleA,
+                particleB=self.particleB,
+                mass_fraction_B=self.mass_fraction_B,
+                num_cubes_xy=self.num_cubes_xy,
+                num_cubes_z=self.num_cubes_z,
+                L=self.L,
+                workdir=self.workdir,
+                cutoff=cutoff,
+                cutoff_direction=cutoff_direction,
+                stl_path=stl_path,
+                blender_path=blender_path,
+                packgen_json_path=packgen_json_path,
+                extracted_packing=extracted_packing,
+            )
+        except subprocess.CalledProcessError as e:
+            return SimulationError(
+                simulation_index=i,
+                error_message=f"Subprocess failed with return code {e.returncode}: {e.cmd}",
+                error_type="SubprocessError",
+            )
+        except FileNotFoundError as e:
+            return SimulationError(
+                simulation_index=i,
+                error_message=f"Required file or executable not found: {e}",
+                error_type="FileNotFoundError",
+            )
+        except json.JSONDecodeError as e:
+            return SimulationError(
+                simulation_index=i,
+                error_message=f"Failed to parse JSON output: {e}",
+                error_type="JSONDecodeError",
+            )
+        except Exception as e:
+            return SimulationError(
+                simulation_index=i,
+                error_message=f"Unexpected error: {e}",
+                error_type="UnexpectedError",
+            )
 
     def run_parallel(
         self, cutoff: float, cutoff_direction: str, n: int
-    ) -> list["PackingResults"]:
+    ) -> tuple[list["PackingResults"], list["SimulationError"]]:
         """Run the packing simulation n times in parallel.
 
         Args:
@@ -81,26 +123,54 @@ class PackingSimulation:
             n (int): Number of parallel simulations to run.
 
         Returns:
-            list[PackingResults]: List of PackingResults for each simulation.
+            tuple[list[PackingResults], list[SimulationError]]: Successful results and errors.
         """
         import concurrent.futures
 
-        results = []
+        successful_results = []
+        errors = []
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
                 executor.submit(self.run, cutoff, cutoff_direction, i) for i in range(n)
             ]
             for future in concurrent.futures.as_completed(futures):
-                results.append(future.result())
-        # Sort results by simulation index to preserve order
-        results.sort(key=lambda r: r.workdir)
-        return results
+                try:
+                    result = future.result()
+                    if isinstance(result, SimulationError):
+                        errors.append(result)
+                        print(
+                            f"Simulation {result.simulation_index} failed: {result.error_message}"
+                        )
+                    else:
+                        successful_results.append(result)
+                except Exception as e:
+                    # This catches any additional errors that might occur in the future itself
+                    errors.append(
+                        SimulationError(
+                            simulation_index=-1,  # Unknown index since future failed
+                            error_message=f"Future execution failed: {e}",
+                            error_type="FutureExecutionError",
+                        )
+                    )
+
+        # Sort successful results by simulation index (extracted from workdir name)
+        successful_results.sort(
+            key=lambda r: int(r.workdir.name.split("_")[-1])
+            if r.workdir.name.startswith("simulation_")
+            else 0
+        )
+        return successful_results, errors
 
     def _run_packgen(self, i: int = 1) -> tuple[Path, Path, Path]:
         """Run the packgen tool to generate the packing.
 
         Args:
             i (int, optional): Simulation index for parallel runs. Defaults to 1.
+
+        Raises:
+            subprocess.CalledProcessError: If packgen command fails.
+            FileNotFoundError: If packgen executable is not found.
         """
         config = {
             "seed": None,
@@ -123,18 +193,44 @@ class PackingSimulation:
         subdir.mkdir(parents=True, exist_ok=True)
         basename = "parameters"
         config_path = subdir / f"{basename}.json"
-        with open(config_path, "w") as f:
-            json.dump(config, f, indent=4)
+
+        try:
+            with open(config_path, "w") as f:
+                json.dump(config, f, indent=4)
+        except (OSError, IOError) as e:
+            raise RuntimeError(f"Failed to write configuration file {config_path}: {e}")
+
         packgen_args = ["packgen", "--", str(config_path)]
-        _ = subprocess.run(
-            packgen_args,
-            cwd=subdir,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            subprocess.run(
+                packgen_args,
+                cwd=subdir,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        except subprocess.CalledProcessError as e:
+            error_msg = f"packgen failed with return code {e.returncode}"
+            if e.stderr:
+                error_msg += f". stderr: {e.stderr.strip()}"
+            if e.stdout:
+                error_msg += f". stdout: {e.stdout.strip()}"
+            raise subprocess.CalledProcessError(e.returncode, e.cmd, error_msg)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                "packgen executable not found. Please ensure it's installed and in PATH."
+            )
+
         prefix = "packing"
         stl_path = subdir / f"{prefix}_{basename}.stl"
+
+        # Check if expected output files exist
+        if not stl_path.exists():
+            raise RuntimeError(
+                f"Expected STL output file {stl_path} was not created by packgen"
+            )
+
         if (subdir / f"{prefix}_{basename}.blender").exists():
             (subdir / f"{prefix}_{basename}.blender").rename(
                 subdir / f"{prefix}_{basename}.blend"
@@ -146,21 +242,66 @@ class PackingSimulation:
     def _run_stl_extractor(
         self, stl_path: Path, cutoff: float, cutoff_direction: str
     ) -> ExtractedPacking:
+        """Run the STL extractor to process the generated STL file.
+
+        Args:
+            stl_path: Path to the STL file to process.
+            cutoff: Cutoff distance for the extraction.
+            cutoff_direction: Direction of the cutoff.
+
+        Returns:
+            ExtractedPacking: The extracted packing data.
+
+        Raises:
+            subprocess.CalledProcessError: If matlab command fails.
+            FileNotFoundError: If matlab executable is not found.
+            json.JSONDecodeError: If the output JSON is invalid.
+        """
         stl_json_output = stl_path.parent / f"{stl_path.stem}_extracted.json"
         args = [
             "matlab",
             "-batch",
             f'STLextractToJSON("{stl_path}","{str(stl_json_output)}", "RemoveOutlierRangez",true,"OutlierZThreshold",0,"Cutoff",{cutoff}, "CutoffDirection","{cutoff_direction}","BoundingBoxLength",{self.L})',
         ]
-        _ = subprocess.run(
-            args,
-            cwd=stl_path.parent,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        with open(stl_json_output) as f:
-            data = json.load(f)
+
+        try:
+            subprocess.run(
+                args,
+                cwd=stl_path.parent,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        except subprocess.CalledProcessError as e:
+            error_msg = f"matlab STL extraction failed with return code {e.returncode}"
+            if e.stderr:
+                error_msg += f". stderr: {e.stderr.strip()}"
+            if e.stdout:
+                error_msg += f". stdout: {e.stdout.strip()}"
+            raise subprocess.CalledProcessError(e.returncode, e.cmd, error_msg)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                "matlab executable not found. Please ensure MATLAB is installed and in PATH."
+            )
+
+        # Check if output file was created
+        if not stl_json_output.exists():
+            raise RuntimeError(
+                f"Expected JSON output file {stl_json_output} was not created by matlab"
+            )
+
+        try:
+            with open(stl_json_output) as f:
+                data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise json.JSONDecodeError(
+                f"Failed to parse JSON output from {stl_json_output}: {e}", e.doc, e.pos
+            )
+        except (OSError, IOError) as e:
+            raise RuntimeError(
+                f"Failed to read JSON output file {stl_json_output}: {e}"
+            )
 
         self._post_process_data_from_stl_extractor(data)
         return ExtractedPacking.from_dict(data)
