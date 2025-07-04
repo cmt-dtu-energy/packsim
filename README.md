@@ -3,15 +3,15 @@
 `packsim` is a command-line tool and Python library that allows you to simulate the process
 of packing particles inside a box container.
 
-Currently, the only process supported involves simulating **up to two types** of 
-**hexagonal prismatic particles**, termed `A` and `B`, with the mass content of `B` possibly zero. 
+Currently, the only process supported involves simulating **up to two types** of
+**hexagonal prismatic particles**, termed `A` and `B`, with the mass content of `B` possibly zero.
 The simulation involving placing the particles in a 3D grid above the bottom of the
 container, randomly choosing with particle to place at a given grid point (respecting
 the target mass fraction of each particle) and the orientation of the prism's axis.
 Gravity is the only force driving the simulation.
 
-With `packsim`, you specify the input parameters for the simulation, and 
-the application runs the simulation, saves intermediate files and 
+With `packsim`, you specify the input parameters for the simulation, and
+the application runs the simulation, saves intermediate files and
 outputs a description of the final packing - essentially, the final
 position and orientation of all the particles described in the input.
 
@@ -19,11 +19,11 @@ position and orientation of all the particles described in the input.
 
 ### Pre-requisites
 
-Please notice that, although projects listed below are open-sourced, 
+Please notice that, although projects listed below are open-sourced,
 **the STLExtractor dependency requires a MATLAB license**.
 
 - [`packgen`][packgen], responsible for simulating the packing and exporting an intermediate STL file
-- [`STLExtractor`][stlextractor], responsible for extracting geometric information from the STL file
+- [`STLExtractor`][stlextractor], responsible for extracting geometric information from the STL file - **version 0.7.0 or later is required**.
 
 [packgen]: https://github.com/cmt-dtu-energy/packgen
 [stlextractor]: https://github.com/cmt-dtu-energy/stlextractor
@@ -33,7 +33,7 @@ Please notice that, although projects listed below are open-sourced,
 Install `packsim` with:
 
 ```shell
-uv pip install git+https://github.com/cmt-dtu-energy/packsim@v0.4.0
+uv pip install git+https://github.com/cmt-dtu-energy/packsim@v0.5.0
 ```
 
 ## Usage as command-line tool
@@ -48,7 +48,6 @@ Notice that
 - If the output file specification is missing, `packsim` will write to stdout
 
 ### Specification of the input file
-
 
 Each of the type of hexagonal particles should be specified
 as a JSON object as in the example:
@@ -77,7 +76,6 @@ The input file must contain valid JSON with the valid fields:
   "work_dir": "..." // directory where to save the intermediate files
 }
 ```
-
 
 If `n_sims` is larger than 1, then the simulations are run in parallel.
 
@@ -134,4 +132,3 @@ Each element of the `extracted_packing.items` field is an object describing the 
 
 }
 ```
-
