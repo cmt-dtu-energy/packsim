@@ -180,8 +180,8 @@ wheels = [
 
 [[package]]
 name = "packgen"
-version = "0.4.0"
-source = { git = "https://github.com/cmt-dtu-energy/packgen?rev=v0.4.0#6dce3b5f65c88261bd15e9bbe59e0ddadd0f9caa" }
+version = "0.4.1"
+source = { git = "https://github.com/cmt-dtu-energy/packgen?rev=v0.4.1#ac7f3755fc1293ff67afe61eff62984e703efcd7" }
 dependencies = [
     { name = "bpy" },
     { name = "numpy" },
@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "packsim"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "packgen" },
@@ -203,7 +203,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "packgen", git = "https://github.com/cmt-dtu-energy/packgen?rev=v0.4.0" },
+    { name = "packgen", git = "https://github.com/cmt-dtu-energy/packgen?rev=v0.4.1" },
     { name = "typer", specifier = ">=0.16.0" },
 ]
 
